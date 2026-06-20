@@ -4,6 +4,8 @@
 
 Live experience is fully self-contained, responsive, and optimized for both desktop viewports and mobile drawer overlays.
 
+👉 **[Live Demo: echoes-audio-visualizer](https://roshan3043.github.io/Audio-Visualizer/)**
+
 ---
 
 ## 🌟 Key Features

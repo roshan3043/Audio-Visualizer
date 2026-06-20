@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echoes // Interactive Creative Engineering Audio Visualizer</title>
+    <meta name="description" content="Interactive real-time sound audio visualizer utilizing the Web Audio API and HTML5 Canvas, translating audio frequencies into dynamic particle rings and color glows.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Canvas for Visualizer -->
+    <canvas id="visualizer-canvas"></canvas>
+
+    <!-- Ambient Grid & Glow Overlay -->
+    <div class="grid-overlay"></div>
+    <div class="glow-bg" id="glow-bg"></div>
+
+    <!-- Drop Zone Overlay -->
+    <div class="drop-zone" id="drop-zone">
+        <div class="drop-zone-content">
+            <svg class="drop-icon" viewBox="0 0 24 24" width="48" height="48">
+                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z" fill="currentColor"/>
+            </svg>
+            <p>Drop audio file to visualize</p>
+        </div>
+    </div>
+
+    <!-- Splash / Welcome Overlay -->
+    <div class="overlay-screen active" id="splash-screen">
+        <div class="splash-content">
+            <div class="splash-header animate-fade-in">
+                <span class="badge">CREATIVE ENGINEERING</span>
+                <h1>E C H O E S</h1>
+                <p class="subtitle">Interactive Real-Time Audio Visualizer</p>
+            </div>
+            
+            <div class="splash-description animate-fade-in delay-1">
+                <p>Experience sound converted into dynamic, high-fidelity particle rings, color glow coronas, and raw orbital waveforms. Built with HTML5 Canvas, Web Audio API, and Vanilla JS.</p>
+            </div>
+
+            <div class="splash-action animate-fade-in delay-2">
+                <button class="btn btn-primary btn-lg" id="btn-enter">
+                    <span>ENTER EXPERIENCE</span>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="splash-footer animate-fade-in delay-3">
+                <span>Created using Web Audio API & HTML5 Canvas</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace UI -->
+    <div class="app-ui hidden" id="app-ui">
+        
+        <!-- Top Navigation Bar -->
+        <header class="app-header">
+            <div class="brand">
+                <span class="logo-dot"></span>
+                <span class="brand-name">E C H O E S</span>
+                <span class="brand-divider">/</span>
+                <span class="module-title" id="active-track-name">Procedural Synthesizer</span>
+            </div>
+            
+            <div class="header-actions">
+                <!-- Mobile specific drawer toggles -->
+                <button class="btn btn-icon mobile-only" id="btn-mobile-sources" title="Audio Source">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 18V5l12-2v13"></path>
+                        <circle cx="6" cy="18" r="3"></circle>
+                        <circle cx="18" cy="16" r="3"></circle>
+                    </svg>
+                </button>
+                <button class="btn btn-icon mobile-only" id="btn-mobile-config" title="Visual Settings">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="4" y1="21" x2="4" y2="14"></line>
+                        <line x1="4" y1="10" x2="4" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12" y2="3"></line>
+                        <line x1="20" y1="21" x2="20" y2="16"></line>
+                        <line x1="20" y1="12" x2="20" y2="3"></line>
+                        <line x1="1" y1="14" x2="7" y2="14"></line>
+                        <line x1="9" y1="8" x2="15" y2="8"></line>
+                        <line x1="17" y1="16" x2="23" y2="16"></line>
+                    </svg>
+                </button>
+
+                <button class="btn btn-icon" id="btn-toggle-ui" title="Toggle UI Visibility (H)">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+                <button class="btn btn-icon desktop-only" id="btn-fullscreen" title="Toggle Fullscreen (F)">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Left Drawer: Audio Sources -->
+        <aside class="panel panel-left" id="panel-sources">
+            <div class="panel-header">
+                <h2>AUDIO SOURCE</h2>
+                <button class="btn btn-icon btn-close-panel mobile-only" id="btn-close-sources" title="Close Panel">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="panel-dot teal desktop-only"></div>
+            </div>
+            
+            <div class="panel-content">
+                <!-- Sources List -->
+                <div class="source-list">
+                    <!-- Echoes Synth Option -->
+                    <div class="source-card active" data-source="synth">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="6" y1="9" x2="6" y2="15"></line>
+                                <line x1="10" y1="9" x2="10" y2="15"></line>
+                                <line x1="14" y1="9" x2="14" y2="15"></line>
+                                <line x1="18" y1="9" x2="18" y2="15"></line>
+                            </svg>
+                        </div>
+                        <div class="card-body">
+                            <h3>Echoes Synth</h3>
+                            <p>Procedural ambient beat generator. Pure web audio synthesis.</p>
+                        </div>
+                    </div>
+
+                    <!-- Audio File Upload Option -->
+                    <div class="source-card" data-source="file">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 5v14M5 12h14"></path>
+                            </svg>
+                        </div>
+                        <div class="card-body">
+                            <h3>Audio File</h3>
+                            <p>Load local MP3, WAV, or OGG tracks (drag & drop supported).</p>
+                        </div>
+                    </div>
+
+                    <!-- Microphone Option -->
+                    <div class="source-card" data-source="mic">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v1a7 7 0 0 1-14 0v-1M12 19v4M8 23h8"></path>
+                            </svg>
+                        </div>
+                        <div class="card-body">
+                            <h3>Microphone Input</h3>
+                            <p>Visualize surrounding environmental sound in real-time.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Source Specific Sub-options -->
+                <div class="source-sub-panel" id="sub-panel-synth">
+                    <div class="sub-section">
+                        <h4 class="section-label">SYNTH CONTROLLER</h4>
+                        <div class="synth-synth-grid">
+                            <button class="btn btn-secondary btn-sm" id="btn-synth-kick">TRIGGER KICK</button>
+                            <button class="btn btn-secondary btn-sm" id="btn-synth-snare">TRIGGER SNARE</button>
+                        </div>
+                    </div>
+                    <div class="sub-section">
+                        <h4 class="section-label">FILTER CUTOFF</h4>
+                        <div class="control-row">
+                            <input type="range" id="slider-synth-filter" min="200" max="5000" step="1" value="1200">
+                            <span class="val-display" id="val-synth-filter">1200Hz</span>
+                        </div>
+                    </div>
+                    <div class="sub-section">
+                        <h4 class="section-label">AUTO BEAT GENERATOR</h4>
+                        <div class="toggle-row">
+                            <span>Enable Drum Sequencer</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-synth-beat" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="toggle-row" style="margin-top: 10px;">
+                            <span>Enable Melodic Synth</span>
+                            <label class="switch">
+                                <input type="checkbox" id="toggle-synth-melody" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="source-sub-panel hidden" id="sub-panel-file">
+                    <div class="file-uploader-box" id="file-uploader-box">
+                        <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
+                        </svg>
+                        <span>Select Audio File</span>
+                        <p class="file-limits">MP3, WAV, M4A, FLAC up to 50MB</p>
+                    </div>
+                </div>
+
+                <div class="source-sub-panel hidden" id="sub-panel-mic">
+                    <div class="mic-status-box">
+                        <div class="pulse-indicator" id="mic-pulse"></div>
+                        <span id="mic-status-text">Microphone Ready</span>
+                        <p class="file-limits">Use headphones to prevent feedback loops</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Right Drawer: Visualizer Configuration -->
+        <aside class="panel panel-right" id="panel-config">
+            <div class="panel-header">
+                <h2>VISUAL CONFIG</h2>
+                <button class="btn btn-icon btn-close-panel mobile-only" id="btn-close-config" title="Close Panel">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="panel-dot purple desktop-only"></div>
+            </div>
+            
+            <div class="panel-content">
+                <!-- Visual Mode Selection -->
+                <div class="config-section">
+                    <h4 class="section-label">VISUALIZER MODE</h4>
+                    <div class="mode-grid">
+                        <button class="btn btn-mode active" data-mode="ring">
+                            <span>PARTICLE RING</span>
+                        </button>
+                        <button class="btn btn-mode" data-mode="bars">
+                            <span>CORONA BARS</span>
+                        </button>
+                        <button class="btn btn-mode" data-mode="orbit">
+                            <span>ORBIT WAVE</span>
+                        </button>
+                        <button class="btn btn-mode" data-mode="nebula">
+                            <span>NEBULA GLOW</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Theme Selection -->
+                <div class="config-section">
+                    <h4 class="section-label">COLOR PALETTE</h4>
+                    <div class="theme-grid">
+                        <button class="btn btn-theme active" data-theme="cyberpunk" style="--c1: #ff0055; --c2: #00ffcc;">
+                            <span class="theme-dot" style="background: linear-gradient(135deg, #ff0055, #00ffcc);"></span>
+                            <span>Cyberpunk</span>
+                        </button>
+                        <button class="btn btn-theme" data-theme="aurora" style="--c1: #00ffaa; --c2: #0088ff;">
+                            <span class="theme-dot" style="background: linear-gradient(135deg, #00ffaa, #0088ff);"></span>
+                            <span>Deep Aurora</span>
+                        </button>
+                        <button class="btn btn-theme" data-theme="flare" style="--c1: #ff5500; --c2: #8800ff;">
+                            <span class="theme-dot" style="background: linear-gradient(135deg, #ff5500, #8800ff);"></span>
+                            <span>Solar Flare</span>
+                        </button>
+                        <button class="btn btn-theme" data-theme="mono" style="--c1: #ffffff; --c2: #444444;">
+                            <span class="theme-dot" style="background: linear-gradient(135deg, #ffffff, #444444);"></span>
+                            <span>Luxury Mono</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Physics & Visual parameters -->
+                <div class="config-section">
+                    <h4 class="section-label">PARTICLE PARAMETERS</h4>
+                    
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Particle Count</span>
+                            <span class="val-display" id="val-particle-count">400</span>
+                        </div>
+                        <input type="range" id="slider-particle-count" min="50" max="1500" step="25" value="400">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Particle Size</span>
+                            <span class="val-display" id="val-particle-size">2.0px</span>
+                        </div>
+                        <input type="range" id="slider-particle-size" min="0.5" max="8.0" step="0.5" value="2.0">
+                    </div>
+                    
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Glow Intensity</span>
+                            <span class="val-display" id="val-glow-intensity">1.2</span>
+                        </div>
+                        <input type="range" id="slider-glow-intensity" min="0" max="3" step="0.1" value="1.2">
+                    </div>
+                </div>
+
+                <!-- Audio Processing settings -->
+                <div class="config-section">
+                    <h4 class="section-label">ANALYSIS PARAMETERS</h4>
+                    
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Sensitivity</span>
+                            <span class="val-display" id="val-sensitivity">1.5</span>
+                        </div>
+                        <input type="range" id="slider-sensitivity" min="0.5" max="3.0" step="0.1" value="1.5">
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-header">
+                            <span>Temporal Smoothing</span>
+                            <span class="val-display" id="val-smoothing">0.82</span>
+                        </div>
+                        <input type="range" id="slider-smoothing" min="0.5" max="0.98" step="0.01" value="0.82">
+                    </div>
+
+                    <div class="toggle-row">
+                        <span>Reactive Blur Effect</span>
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-motion-blur" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Performance preset buttons -->
+                <div class="config-section-footer">
+                    <button class="btn btn-secondary btn-sm btn-full" id="btn-reset-settings">RESET CONFIGURATION</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Bottom Playback Control Hub -->
+        <footer class="app-control-bar" id="app-controls">
+            <!-- Progress Bar / Timeline (Active when playing file) -->
+            <div class="timeline-container hidden" id="timeline-container">
+                <span class="time-display" id="time-current">0:00</span>
+                <div class="progress-bar-wrapper" id="progress-bar-wrapper">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" id="progress-bar-fill"></div>
+                        <div class="progress-bar-handle" id="progress-bar-handle"></div>
+                    </div>
+                </div>
+                <span class="time-display" id="time-duration">0:00</span>
+            </div>
+
+            <div class="controls-inner">
+                <!-- Track Details -->
+                <div class="now-playing-panel">
+                    <div class="now-playing-visualizer">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="track-details">
+                        <span class="track-name" id="control-track-name">Echoes Ambient Synth</span>
+                        <span class="track-artist" id="control-track-source">Procedural Generator</span>
+                    </div>
+                </div>
+
+                <!-- Playback Core Buttons -->
+                <div class="center-controls">
+                    <button class="btn btn-circle" id="btn-play-pause" title="Play / Pause (Space)">
+                        <!-- Play Icon -->
+                        <svg class="icon-play" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        <!-- Pause Icon -->
+                        <svg class="icon-pause hidden" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Secondary Options (Volume, Synth Tempo, Info) -->
+                <div class="right-controls">
+                    <div class="volume-control-wrapper">
+                        <button class="btn btn-icon" id="btn-volume-toggle">
+                            <!-- Volume Up Icon -->
+                            <svg class="icon-volume-up" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                            <!-- Mute Icon -->
+                            <svg class="icon-volume-mute hidden" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <line x1="23" y1="9" x2="17" y2="15"></line>
+                                <line x1="17" y1="9" x2="23" y2="15"></line>
+                            </svg>
+                        </button>
+                        <input type="range" id="slider-volume" min="0" max="1" step="0.05" value="0.7">
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <!-- Toast Notification Panel -->
+        <div class="toast" id="app-toast">
+            <span class="toast-message">Audio track loaded successfully.</span>
+        </div>
+    </div>
+
+    <!-- Hidden Input for Audio uploads -->
+    <input type="file" id="audio-file-input" accept="audio/*">
+
+    <!-- Javascript files -->
+    <script src="js/synth.js"></script>
+    <script src="js/visualizer.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
